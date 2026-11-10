@@ -11,6 +11,18 @@ npm start
 
 Angular sirve la aplicación en `http://localhost:4200`.
 
+## Publicar en Cloudflare Pages
+
+Este proyecto genera una aplicación estática en `dist/copa-max/browser`. Para conectarlo desde Cloudflare Pages:
+
+1. Importá el repositorio desde **Workers & Pages → Create application → Pages → Connect to Git**.
+2. Configurá el directorio raíz como `/`, el comando de build como `npm run build` y el directorio de salida como `dist/copa-max/browser`.
+3. Usá la rama de producción del repositorio (por ejemplo, `main`) y elegí **Save and Deploy**.
+
+El archivo `.node-version` fija Node 22, compatible con Angular y el entorno de build de Pages. Cloudflare Pages sirve las rutas de esta SPA desde la raíz, así que funcionan las páginas internas como `/admin` y `/equipos` al abrirlas directamente. Para una carga manual, ejecutá `npm run build` y subí el contenido de `dist/copa-max/browser` con Wrangler Pages.
+
+La aplicación usa la URL y la clave pública de Supabase definidas en `src/environments/environment.ts`; esa clave publicable forma parte del cliente web. No agregues una clave `service_role` al build ni a variables del frontend.
+
 ## Conectar Supabase
 
 1. Creá el proyecto de Supabase.

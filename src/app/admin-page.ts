@@ -21,6 +21,8 @@ export class AdminPage implements OnInit {
   ownerForm={teamId:'',email:''};ownerBusy=false;ownerCredentials:TeamOwnerCredentials|null=null;
   postseasonCups:PostseasonCup[]=[];cupTypes:PostseasonCupType[]=['ORO','PLATA'];cupTeamToAdd:Record<string,string>={};cupMatchEdit:Record<string,string>={};
   scorers:TournamentScorer[]=[];scorerGoalEdits:Record<string,number>={};scorerForm={teamId:'',playerId:'',playerName:'',goals:0};
+  scorerListSearch='';
+  scorerError='';
   cupMatchForms:Record<string,{roundNumber:number;matchNumber:number;homeTeamId:string;awayTeamId:string;homeScore:number|'';awayScore:number|'';winnerTeamId:string;date:string;time:string;venue:string}>={};
   matchForm={date:'',time:'',round:1,zone:'A' as TournamentMatchZone,home:'',away:'',homeScore:'' as number|'',awayScore:'' as number|'',venue:''};
   constructor(public auth:SupabaseAuthService,private data:TournamentDataService,private cdr:ChangeDetectorRef){}
@@ -59,7 +61,7 @@ export class AdminPage implements OnInit {
   async loadTournament(tournamentId:string):Promise<void>{
     const selected=this.availableTournaments.find(t=>t.id===tournamentId);if(!selected)return;
     this.activeTournamentId=selected.id;this.activeYear=selected.year;this.loadingData=true;this.dashboardError='';
-    try{const season=await this.data.loadTournament(tournamentId);this.teams=season.teams;this.players=season.players;this.matches=season.matches;this.sponsors=season.sponsors;this.refreshRounds();try{this.postseasonCups=await this.data.loadPostseasonCups(tournamentId);this.ensureCupMatchForms();}catch(error){this.postseasonCups=[];this.dashboardError=this.errorText(error);}try{this.scorers=await this.data.loadTournamentScorers(tournamentId);this.scorerGoalEdits=Object.fromEntries(this.scorers.map(s=>[s.id,s.goals]));}catch(error){this.scorers=[];this.dashboardError=this.errorText(error);}}
+    try{const season=await this.data.loadTournament(tournamentId);this.teams=season.teams;this.players=season.players;this.matches=season.matches;this.sponsors=season.sponsors;this.refreshRounds();this.scorerError='';try{this.postseasonCups=await this.data.loadPostseasonCups(tournamentId);this.ensureCupMatchForms();}catch(error){this.postseasonCups=[];this.dashboardError=this.errorText(error);}try{this.scorers=await this.data.loadTournamentScorers(tournamentId);this.scorerGoalEdits=Object.fromEntries(this.scorers.map(s=>[s.id,s.goals]));}catch(error){this.scorers=[];this.scorerError=this.scorerErrorText(error);}}
     catch(error){this.dashboardError=this.errorText(error);this.teams=[];this.players=[];this.matches=[];this.sponsors=[];this.scorers=[];this.scorerForm={teamId:'',playerId:'',playerName:'',goals:0};this.refreshRounds();}
     finally{this.loadingData=false;this.cdr.markForCheck();}
   }
@@ -120,10 +122,11 @@ export class AdminPage implements OnInit {
   formatDate(date:string|null):string{if(!date)return 'Día a confirmar';const day=date.split('T')[0];return new Intl.DateTimeFormat('es-AR',{day:'2-digit',month:'short'}).format(new Date(`${day}T12:00:00`));}
   formatTime(time:string|null):string{return time?time.slice(0,5):'Hora a confirmar';}
   private refreshRounds():void{this.rounds=[...new Set(this.matches.map(m=>m.round))].sort((a,b)=>a-b);if(!this.rounds.includes(this.matchForm.round))this.matchForm.round=this.rounds[0]||1;}
-  private clearTournamentData():void{this.teams=[];this.players=[];this.matches=[];this.sponsors=[];this.postseasonCups=[];this.scorers=[];this.scorerGoalEdits={};this.scorerForm={teamId:'',playerId:'',playerName:'',goals:0};this.refreshRounds();}
+  private clearTournamentData():void{this.teams=[];this.players=[];this.matches=[];this.sponsors=[];this.postseasonCups=[];this.scorers=[];this.scorerGoalEdits={};this.scorerError='';this.scorerForm={teamId:'',playerId:'',playerName:'',goals:0};this.refreshRounds();}
   scorerPlayers():Player[]{return this.players.filter(p=>p.teamId===this.scorerForm.teamId);}
+  filteredScorers():TournamentScorer[]{const query=this.scorerListSearch.trim().toLocaleLowerCase('es-AR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');return this.scorers.filter(s=>!query||`${s.playerName} ${s.teamName}`.toLocaleLowerCase('es-AR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(query));}
   selectScorerPlayer(playerId:string):void{this.scorerForm.playerId=playerId;const player=this.players.find(p=>p.id===playerId);if(player)this.scorerForm.playerName=player.name;}
-  async addScorer():Promise<void>{const f=this.scorerForm;if(!this.canEditTournament||!f.teamId||f.playerName.trim().length<2||!Number.isInteger(Number(f.goals))||Number(f.goals)<0){this.notify('Elegí el equipo, el nombre del goleador y una cantidad válida de goles.');return;}try{await this.data.addTournamentScorer(this.activeTournamentId,{teamId:f.teamId,playerId:f.playerId||null,playerName:f.playerName.trim(),goals:Number(f.goals)});this.scorers=await this.data.loadTournamentScorers(this.activeTournamentId);this.scorerGoalEdits=Object.fromEntries(this.scorers.map(s=>[s.id,s.goals]));this.scorerForm={teamId:f.teamId,playerId:'',playerName:'',goals:0};this.notify('Goleador agregado al torneo.');}catch(error){this.dashboardError=this.errorText(error);}}
+  async addScorer():Promise<void>{const f=this.scorerForm;this.scorerError='';if(!this.canEditTournament||!f.teamId||f.playerName.trim().length<2||!Number.isInteger(Number(f.goals))||Number(f.goals)<0){this.notify('Elegí el equipo, el nombre del goleador y una cantidad válida de goles.');return;}try{await this.data.addTournamentScorer(this.activeTournamentId,{teamId:f.teamId,playerId:f.playerId||null,playerName:f.playerName.trim(),goals:Number(f.goals)});this.scorers=await this.data.loadTournamentScorers(this.activeTournamentId);this.scorerGoalEdits=Object.fromEntries(this.scorers.map(s=>[s.id,s.goals]));this.scorerForm={teamId:f.teamId,playerId:'',playerName:'',goals:0};this.notify('Goles cargados correctamente.');}catch(error){this.scorerError=this.scorerErrorText(error);}}
   async saveScorerGoals(scorer:TournamentScorer):Promise<void>{const goals=Number(this.scorerGoalEdits[scorer.id]);if(!Number.isInteger(goals)||goals<0){this.notify('Los goles tienen que ser un número igual o mayor a cero.');return;}try{await this.data.updateTournamentScorerGoals(scorer.id,goals);this.scorers=await this.data.loadTournamentScorers(this.activeTournamentId);this.scorerGoalEdits=Object.fromEntries(this.scorers.map(s=>[s.id,s.goals]));this.notify('Goles actualizados.');}catch(error){this.dashboardError=this.errorText(error);}}
   async addOneScorerGoal(scorer:TournamentScorer):Promise<void>{this.scorerGoalEdits[scorer.id]=scorer.goals+1;await this.saveScorerGoals(scorer);}
   async deleteScorer(id:string):Promise<void>{try{await this.data.deleteTournamentScorer(id);this.scorers=this.scorers.filter(s=>s.id!==id);delete this.scorerGoalEdits[id];this.notify('Goleador quitado del torneo.');}catch(error){this.dashboardError=this.errorText(error);}}
@@ -204,6 +207,11 @@ export class AdminPage implements OnInit {
     if(message.toLowerCase().includes('bucket not found'))return 'Falta el bucket de imágenes del torneo. Volvé a ejecutar la última versión de supabase/schema.sql.';
     if(message.includes('ya tiene sus dos torneos'))return message;
     return message;
+  }
+  private scorerErrorText(error:unknown):string{
+    const message=error instanceof Error?error.message:(error as {message?:string})?.message||'';
+    if(message.includes('tournament_scorers')||message.includes('PGRST205'))return 'Supabase todavía no tiene la tabla de goleadores. Ejecutá supabase/migrations/20261110_tournament_scorers.sql en el SQL Editor del proyecto y volvé a cargar el panel.';
+    return this.errorText(error);
   }
   private notify(message:string):void{this.toast=message;setTimeout(()=>this.toast='',2500);}
   private withTimeout<T>(operation:Promise<T>,milliseconds:number,message:string):Promise<T>{
