@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { PostseasonCup, PostseasonCupMatch, TournamentDataService, TournamentSummary } from './tournament-data.service';
+import { PostseasonCup, PostseasonCupMatch, TournamentDataService, TournamentScorer, TournamentSummary } from './tournament-data.service';
 
 type Zone='A'|'B';
 type MatchZone=Zone|'INTERZONAL';
@@ -14,7 +14,7 @@ interface Sponsor {id:string;name:string;logo:string;url:string;category:string;
 export class LandingPage implements OnInit,AfterViewInit {
   menuOpen=false;activeZone:Zone='A';activeMatchZone:MatchZone='A';activeView:'fixture'|'results'='fixture';
   activeYear=new Date().getFullYear();availableYears:number[]=[];availableTournaments:TournamentSummary[]=[];activeTournamentId='';loadingData=false;
-  teams:Team[]=[];matches:Match[]=[];rounds:number[]=[];selectedRound=1;sponsors:Sponsor[]=[];postseasonCups:PostseasonCup[]=[];
+  teams:Team[]=[];matches:Match[]=[];rounds:number[]=[];selectedRound=1;sponsors:Sponsor[]=[];postseasonCups:PostseasonCup[]=[];scorers:TournamentScorer[]=[];
   private revealObserver?:IntersectionObserver;
   constructor(private data:TournamentDataService,private cdr:ChangeDetectorRef){}
 
@@ -40,7 +40,7 @@ export class LandingPage implements OnInit,AfterViewInit {
   }
   private observeRevealElements():void{
     if(!this.revealObserver)return;
-    document.querySelectorAll('.intro-top,.intro-body,.stat-strip,.teams-content>.eyebrow,.teams-title-row,.teams-footer,.sponsors-heading,.sponsor-card,.competition-head,.standings-card,.fixtures-card,.next-content,.quote-section blockquote').forEach((el,i)=>{
+      document.querySelectorAll('.intro-top,.intro-body,.stat-strip,.teams-content>.eyebrow,.teams-title-row,.teams-footer,.sponsors-heading,.sponsor-card,.competition-head,.standings-card,.fixtures-card,.scorers-heading,.scorer-feature,.next-content,.quote-section blockquote').forEach((el,i)=>{
       if(el.classList.contains('is-visible'))return;
       el.classList.add('reveal-on-scroll');(el as HTMLElement).style.setProperty('--reveal-delay',`${Math.min(i%4,3)*65}ms`);this.revealObserver?.observe(el);
     });
@@ -57,11 +57,11 @@ export class LandingPage implements OnInit,AfterViewInit {
   async loadTournament(id:string):Promise<void>{
     const tournament=this.availableTournaments.find(t=>t.id===id);if(!tournament)return;
     this.activeYear=tournament.year;this.activeTournamentId=tournament.id;this.loadingData=true;this.cdr.markForCheck();
-    try{const data=await this.data.loadTournament(id);this.teams=data.teams;this.matches=data.matches;this.sponsors=data.sponsors;this.refreshRounds();this.selectedRound=this.rounds[0]||1;try{this.postseasonCups=await this.data.loadPostseasonCups(id);}catch{this.postseasonCups=[];}}
+    try{const data=await this.data.loadTournament(id);this.teams=data.teams;this.matches=data.matches;this.sponsors=data.sponsors;this.refreshRounds();this.selectedRound=this.rounds[0]||1;try{this.postseasonCups=await this.data.loadPostseasonCups(id);}catch{this.postseasonCups=[];}try{this.scorers=await this.data.loadTournamentScorers(id);}catch{this.scorers=[];}}
     catch{this.clearTournament();}
     finally{this.loadingData=false;this.cdr.markForCheck();requestAnimationFrame(()=>this.observeRevealElements());}
   }
-  private clearTournament():void{this.activeTournamentId='';this.teams=[];this.matches=[];this.sponsors=[];this.postseasonCups=[];this.refreshRounds();this.cdr.markForCheck();}
+  private clearTournament():void{this.activeTournamentId='';this.teams=[];this.matches=[];this.sponsors=[];this.postseasonCups=[];this.scorers=[];this.refreshRounds();this.cdr.markForCheck();}
   private refreshRounds():void{this.rounds=[...new Set(this.matches.map(m=>m.round))].sort((a,b)=>a-b);if(!this.rounds.includes(this.selectedRound))this.selectedRound=this.rounds[0]||1;}
   moveSponsorCarousel(direction:number):void{document.querySelector('.sponsor-track')?.scrollBy({left:direction*300,behavior:'smooth'});}
   scrollToSection(event:Event,id:string):void{event.preventDefault();this.menuOpen=false;history.replaceState(null,'',`#${id}`);document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});}
