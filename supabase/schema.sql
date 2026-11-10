@@ -234,6 +234,33 @@ create index if not exists players_team_idx on public.players(team_id);
 create index if not exists sponsors_year_order_idx on public.sponsors(season_year, tournament_id, display_order);
 
 -- Copas posteriores: clasificación automática desde tabla y cuadro de partidos administrable.
+create table if not exists public.tournament_scorers (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references public.tournaments(id) on delete cascade,
+  team_id uuid not null references public.teams(id) on delete cascade,
+  player_id uuid references public.players(id) on delete set null,
+  player_name text not null check(length(trim(player_name)) between 2 and 100),
+  goals smallint not null default 0 check(goals>=0),
+  created_at timestamptz not null default now(),
+  unique(tournament_id,team_id,player_name)
+);
+create or replace function public.validate_tournament_scorer()
+returns trigger language plpgsql set search_path='' as $$
+declare team_tournament uuid; player_team uuid;
+begin
+  select tournament_id into team_tournament from public.teams where id=new.team_id;
+  if team_tournament is distinct from new.tournament_id then raise exception 'El jugador y su club deben pertenecer al torneo seleccionado'; end if;
+  if new.player_id is not null then
+    select team_id into player_team from public.players where id=new.player_id;
+    if player_team is distinct from new.team_id then raise exception 'El jugador seleccionado no pertenece a este equipo'; end if;
+  end if;
+  return new;
+end; $$;
+drop trigger if exists tournament_scorer_validate on public.tournament_scorers;
+create trigger tournament_scorer_validate before insert or update of tournament_id,team_id,player_id on public.tournament_scorers
+for each row execute function public.validate_tournament_scorer();
+create index if not exists tournament_scorers_rank_idx on public.tournament_scorers(tournament_id,goals desc,player_name);
+
 create table if not exists public.postseason_cups (
   id uuid primary key default gen_random_uuid(),
   tournament_id uuid not null references public.tournaments(id) on delete cascade,
@@ -365,6 +392,7 @@ alter table public.team_owners enable row level security;
 alter table public.team_staff enable row level security;
 alter table public.team_achievements enable row level security;
 alter table public.team_gallery enable row level security;
+alter table public.tournament_scorers enable row level security;
 alter table public.postseason_cups enable row level security;
 alter table public.postseason_cup_entries enable row level security;
 alter table public.postseason_cup_matches enable row level security;
@@ -379,6 +407,10 @@ drop policy if exists "public can read tournaments" on public.tournaments;
 create policy "public can read tournaments" on public.tournaments for select to anon, authenticated using (true);
 drop policy if exists "admins manage tournaments" on public.tournaments;
 create policy "admins manage tournaments" on public.tournaments for all to authenticated using (public.is_copamax_admin()) with check (public.is_copamax_admin());
+drop policy if exists "public can read tournament scorers" on public.tournament_scorers;
+create policy "public can read tournament scorers" on public.tournament_scorers for select to anon,authenticated using (true);
+drop policy if exists "admins manage tournament scorers" on public.tournament_scorers;
+create policy "admins manage tournament scorers" on public.tournament_scorers for all to authenticated using (public.is_copamax_admin()) with check (public.is_copamax_admin());
 drop policy if exists "public can read postseason cups" on public.postseason_cups;
 create policy "public can read postseason cups" on public.postseason_cups for select to anon,authenticated using (true);
 drop policy if exists "admins manage postseason cups" on public.postseason_cups;
@@ -447,6 +479,8 @@ grant select,insert,update,delete on public.team_profiles,public.team_staff,publ
 grant select on public.team_profiles,public.team_staff,public.team_achievements,public.team_gallery to anon,authenticated;
 grant select on public.postseason_cups,public.postseason_cup_entries,public.postseason_cup_matches to anon,authenticated;
 grant select,insert,update,delete on public.postseason_cups,public.postseason_cup_entries,public.postseason_cup_matches to authenticated;
+grant select on public.tournament_scorers to anon,authenticated;
+grant select,insert,update,delete on public.tournament_scorers to authenticated;
 grant select on public.team_owners to authenticated;
 
 -- Después de crear la cuenta desde Supabase Auth, promoverla así:

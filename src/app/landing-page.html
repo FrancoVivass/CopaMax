@@ -1,7 +1,7 @@
 <header class="topbar">
   <a class="brand" href="#inicio" aria-label="Copa Max inicio"><img class="brand-crest" src="/assets/copamax-dolores.png" alt="Escudo Copa Max Dolores"><span class="brand-name">COPA<span>MAX</span><small>DOLORES · BUENOS AIRES</small></span></a>
   <button class="menu-toggle" (click)="menuOpen=!menuOpen" aria-label="Abrir menú">☰</button>
-  <nav [class.open]="menuOpen"><a href="#torneo" (click)="scrollToSection($event,'torneo')">El torneo</a><a href="#equipos" (click)="scrollToSection($event,'equipos')">Equipos</a><a href="#liga-copa" (click)="scrollToSection($event,'liga-copa')">Liga / Copa</a><a class="club-nav-cta" style="padding:9px;background:#079fdf;color:#fff" routerLink="/club-admin">Club Admin <span>↗</span></a></nav>
+  <nav [class.open]="menuOpen"><a href="#torneo" (click)="scrollToSection($event,'torneo')">El torneo</a><a href="#equipos" (click)="scrollToSection($event,'equipos')">Equipos</a><a href="#liga-copa" (click)="scrollToSection($event,'liga-copa')">Liga / Copa</a><a routerLink="/goleadores">Goleadores</a><a class="club-nav-cta" style="padding:9px;background:#079fdf;color:#fff" routerLink="/club-admin">Club Admin <span>↗</span></a></nav>
 </header>
 
 <main>
@@ -55,7 +55,7 @@
       </div>
       <aside class="fixtures-card"><div class="fixture-top"><div><span class="card-kicker">EL CAMINO A LA FINAL</span><h3>Fixture & resultados</h3></div><span class="fixture-icon">✳</span></div><div class="fixture-controls"><div class="view-switch"><button [class.selected]="activeView==='fixture'" (click)="activeView='fixture'">Fixture</button><button [class.selected]="activeView==='results'" (click)="activeView='results'">Resultados</button></div><select [(ngModel)]="selectedRound" aria-label="Seleccionar fecha"><option *ngFor="let round of rounds" [ngValue]="round">{{roundLabel(round)}}</option></select><select [(ngModel)]="activeMatchZone" aria-label="Tipo de partido"><option [ngValue]="'A'">Zona A</option><option [ngValue]="'B'">Zona B</option><option [ngValue]="'INTERZONAL'">Interzonales</option></select></div>
         <div class="match-list"><article class="match-row" *ngFor="let match of visibleMatches"><div class="match-date"><strong>{{formatDate(match.date)}}</strong><span>{{formatTime(match.time,match.date)}} · {{match.zone==='INTERZONAL'?'INTERZONAL':'ZONA '+match.zone}}</span></div><div class="match-teams"><span class="match-team"><img *ngIf="team(match.home)?.logo" [src]="team(match.home)?.logo" (error)="logoFallback($event)">{{team(match.home)?.name||'Equipo'}}</span><span class="match-score" [class.played]="match.homeScore!==null">{{match.homeScore===null?'—':match.homeScore}} <i>:</i> {{match.awayScore===null?'—':match.awayScore}}</span><span class="match-team away"><img *ngIf="team(match.away)?.logo" [src]="team(match.away)?.logo" (error)="logoFallback($event)">{{team(match.away)?.name||'Equipo'}}</span></div><div class="venue">{{match.venue||'Sede a confirmar'}}</div></article><div class="empty-fixture" *ngIf="visibleMatches.length===0">{{activeView==='results'?'Todavía no hay resultados para esta fecha.':'No hay partidos programados para esta fecha.'}}</div></div>
-        <div class="fixture-footer"><span>EL FÚTBOL NO SE DETIENE.</span><a routerLink="/equipos">CONOCÉ A LOS CLUBES <span>↗</span></a></div>
+        <div class="fixture-footer"><span>EL FÚTBOL NO SE DETIENE.</span><span><a routerLink="/goleadores">TABLA DE GOLEADORES ↗</a><a routerLink="/equipos">CONOCÉ A LOS CLUBES ↗</a></span></div>
       </aside>
     </div>
   </section>

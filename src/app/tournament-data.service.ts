@@ -9,6 +9,7 @@ export interface TournamentPlayer { id:string; teamId:string; name:string; numbe
 export interface TournamentMatch { id:string; date:string|null; time:string|null; round:number; zone:TournamentMatchZone; home:string; away:string; homeScore:number|null; awayScore:number|null; venue:string; }
 export interface TournamentSponsor { id:string; name:string; logo:string; url:string; category:string; }
 export interface TournamentData { teams:TournamentTeam[]; players:TournamentPlayer[]; matches:TournamentMatch[]; sponsors:TournamentSponsor[]; }
+export interface TournamentScorer {id:string;teamId:string;teamName:string;teamZone:TournamentZone;teamLogo:string;playerId:string|null;playerName:string;goals:number;}
 export interface TeamDirectoryItem extends TournamentTeam {slug:string;coachName:string;bannerUrl:string;description:string;tagline:string;accentColor:string;}
 export interface TeamStaffMember {id:string;teamId:string;name:string;role:string;photoUrl:string;}
 export interface TeamAchievement {id:string;teamId:string;title:string;description:string;year:number|null;imageUrl:string;}
@@ -54,6 +55,15 @@ export class TournamentDataService {
     const sponsors=(sponsorRows.data||[]).map((r:any):TournamentSponsor=>({id:r.id,name:r.name,logo:r.logo_url||'',url:r.website_url||'',category:r.category||'SPONSOR OFICIAL'}));
     return {teams,players,matches,sponsors};
   }
+  async loadTournamentScorers(tournamentId:string):Promise<TournamentScorer[]>{
+    this.requireTournament(tournamentId);
+    const {data,error}=await this.client().from('tournament_scorers').select('id,team_id,player_id,player_name,goals,teams!tournament_scorers_team_id_fkey(id,name,zone,logo_url)').eq('tournament_id',tournamentId).order('goals',{ascending:false}).order('player_name');
+    if(error)throw error;
+    return (data||[]).map((r:any)=>{const t=Array.isArray(r.teams)?r.teams[0]:r.teams;return {id:r.id,teamId:r.team_id,teamName:t?.name||'Equipo',teamZone:t?.zone||'A',teamLogo:t?.logo_url||'',playerId:r.player_id||null,playerName:r.player_name,goals:Number(r.goals||0)};});
+  }
+  async addTournamentScorer(tournamentId:string,scorer:{teamId:string;playerId:string|null;playerName:string;goals:number}):Promise<void>{this.requireTournament(tournamentId);const {error}=await this.client().from('tournament_scorers').insert({tournament_id:tournamentId,team_id:scorer.teamId,player_id:scorer.playerId||null,player_name:scorer.playerName.trim(),goals:scorer.goals});if(error)throw error;}
+  async updateTournamentScorerGoals(id:string,goals:number):Promise<void>{const {error}=await this.client().from('tournament_scorers').update({goals}).eq('id',id);if(error)throw error;}
+  async deleteTournamentScorer(id:string):Promise<void>{const {error}=await this.client().from('tournament_scorers').delete().eq('id',id);if(error)throw error;}
 
   async loadTeamDirectory(tournamentId:string):Promise<TeamDirectoryItem[]>{
     const client=this.client();
