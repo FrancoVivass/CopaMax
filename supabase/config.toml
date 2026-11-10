@@ -1,0 +1,4 @@
+project_id = "buuvjtikgwdmpbvcwbnp"
+
+[functions.create-team-owner]
+verify_jwt = true

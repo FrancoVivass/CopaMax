@@ -1,0 +1,16 @@
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TeamProfileData, TeamProfileMatch, TournamentDataService } from './tournament-data.service';
+
+@Component({standalone:true,selector:'app-team-profile',imports:[CommonModule,RouterLink],templateUrl:'./team-profile-page.html',styleUrl:'./team-profile-page.scss'})
+export class TeamProfilePage implements OnInit {
+  profile:TeamProfileData|null=null;loading=true;error='';
+  constructor(private route:ActivatedRoute,private data:TournamentDataService,private cdr:ChangeDetectorRef){}
+  async ngOnInit():Promise<void>{try{this.profile=await this.data.loadPublicTeamProfile(this.route.snapshot.paramMap.get('slug')||'');}catch(e){this.error=e instanceof Error?e.message:'No se pudo abrir el perfil del equipo.';}finally{this.loading=false;this.cdr.markForCheck();}}
+  get upcomingMatches():TeamProfileMatch[]{return (this.profile?.matches||[]).filter(m=>m.homeScore===null).slice(0,3);}
+  get recentResults():TeamProfileMatch[]{return (this.profile?.matches||[]).filter(m=>m.homeScore!==null).slice().reverse().slice(0,3);}
+  outcome(match:TeamProfileMatch):string{if(!this.profile)return '';const home=match.home===this.profile.team.id;const scored=home?match.homeScore:match.awayScore;const conceded=home?match.awayScore:match.homeScore;return scored===conceded?'EMPATE':Number(scored)>Number(conceded)?'TRIUNFO':'DERROTA';}
+  matchDate(date:string|null):string{if(!date)return 'Fecha a confirmar';return new Intl.DateTimeFormat('es-AR',{weekday:'short',day:'2-digit',month:'short'}).format(new Date(`${date}T12:00:00`));}
+  whatsappLink(phone:string):string{return `https://wa.me/${phone.replace(/[^0-9]/g,'')}`;}
+}
