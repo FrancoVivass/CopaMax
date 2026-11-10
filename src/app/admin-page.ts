@@ -91,6 +91,13 @@ export class AdminPage implements OnInit {
     finally{this.loginBusy=false;this.cdr.markForCheck();}
   }
   async logout():Promise<void>{await this.auth.signOut();this.authenticated=false;this.email='';this.password='';}
+  jumpToSection(event:Event,id:string):void{
+    event.preventDefault();
+    const section=document.getElementById(id);
+    if(!section)return;
+    history.replaceState(null,'',`#${id}`);
+    section.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  }
   team(id:string):Team|undefined{return this.teams.find(t=>t.id===id);}
   teamsForZone(zone:Zone):Team[]{return this.teams.filter(t=>t.zone===zone);}
   teamsForMatchZone(zone:TournamentMatchZone):Team[]{return zone==='INTERZONAL'?this.teams:this.teamsForZone(zone);}
