@@ -61,7 +61,14 @@ export class TournamentDataService {
     if(error)throw error;
     return (data||[]).map((r:any)=>{const t=Array.isArray(r.teams)?r.teams[0]:r.teams;return {id:r.id,teamId:r.team_id,teamName:t?.name||'Equipo',teamZone:t?.zone||'A',teamLogo:t?.logo_url||'',playerId:r.player_id||null,playerName:r.player_name,goals:Number(r.goals||0)};});
   }
-  async addTournamentScorer(tournamentId:string,scorer:{teamId:string;playerId:string|null;playerName:string;goals:number}):Promise<void>{this.requireTournament(tournamentId);const {error}=await this.client().from('tournament_scorers').insert({tournament_id:tournamentId,team_id:scorer.teamId,player_id:scorer.playerId||null,player_name:scorer.playerName.trim(),goals:scorer.goals});if(error)throw error;}
+  async addTournamentScorer(tournamentId:string,scorer:{teamId:string;playerId:string|null;playerName:string;goals:number}):Promise<void>{
+    this.requireTournament(tournamentId);const client=this.client();const name=scorer.playerName.trim();
+    let query=client.from('tournament_scorers').select('id,goals').eq('tournament_id',tournamentId).eq('team_id',scorer.teamId);
+    query=scorer.playerId?query.eq('player_id',scorer.playerId):query.eq('player_name',name);
+    const {data:existing,error:lookupError}=await query.maybeSingle();if(lookupError)throw lookupError;
+    if(existing){const {error}=await client.from('tournament_scorers').update({goals:Number(existing.goals||0)+scorer.goals,player_id:scorer.playerId||null,player_name:name}).eq('id',existing.id);if(error)throw error;return;}
+    const {error}=await client.from('tournament_scorers').insert({tournament_id:tournamentId,team_id:scorer.teamId,player_id:scorer.playerId||null,player_name:name,goals:scorer.goals});if(error)throw error;
+  }
   async updateTournamentScorerGoals(id:string,goals:number):Promise<void>{const {error}=await this.client().from('tournament_scorers').update({goals}).eq('id',id);if(error)throw error;}
   async deleteTournamentScorer(id:string):Promise<void>{const {error}=await this.client().from('tournament_scorers').delete().eq('id',id);if(error)throw error;}
 
