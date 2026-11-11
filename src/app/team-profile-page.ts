@@ -1,9 +1,10 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { VectorIconComponent } from './vector-icon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TeamProfileData, TeamProfileMatch, TournamentDataService } from './tournament-data.service';
 
-@Component({standalone:true,selector:'app-team-profile',imports:[CommonModule,RouterLink],templateUrl:'./team-profile-page.html',styleUrl:'./team-profile-page.scss'})
+@Component({standalone:true,selector:'app-team-profile',imports:[CommonModule,RouterLink,VectorIconComponent],templateUrl:'./team-profile-page.html',styleUrl:'./team-profile-page.scss'})
 export class TeamProfilePage implements OnInit {
   profile:TeamProfileData|null=null;loading=true;error='';
   constructor(private route:ActivatedRoute,private router:Router,private data:TournamentDataService,private cdr:ChangeDetectorRef){}

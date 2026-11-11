@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { VectorIconComponent } from './vector-icon';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SupabaseAuthService } from './supabase-auth.service';
@@ -10,7 +11,7 @@ type Match = TournamentMatch;
 type Sponsor = TournamentSponsor;
 type Zone = TournamentZone;
 
-@Component({selector:'app-admin-page',standalone:true,imports:[CommonModule,FormsModule],templateUrl:'./admin-page.html',styleUrl:'./admin-page.scss'})
+@Component({selector:'app-admin-page',standalone:true,imports:[CommonModule,FormsModule,VectorIconComponent],templateUrl:'./admin-page.html',styleUrl:'./admin-page.scss'})
 export class AdminPage implements OnInit {
   email=''; password=''; loginError=''; loginBusy=false; authenticated=false; checkingSession=true; toast='';
   dashboardError=''; loadingData=false; activeYear=2026; availableYears:number[]=[]; availableTournaments:TournamentSummary[]=[]; activeTournamentId=''; newSeasonYear=new Date().getFullYear(); newTournamentName='';

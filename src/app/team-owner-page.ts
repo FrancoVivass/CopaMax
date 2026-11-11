@@ -1,11 +1,12 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { VectorIconComponent } from './vector-icon';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { TeamProfileData, TournamentDataService } from './tournament-data.service';
 
-@Component({standalone:true,selector:'app-team-owner',imports:[CommonModule,FormsModule,RouterLink],templateUrl:'./team-owner-page.html',styleUrl:'./team-owner-page.scss'})
+@Component({standalone:true,selector:'app-team-owner',imports:[CommonModule,FormsModule,RouterLink,VectorIconComponent],templateUrl:'./team-owner-page.html',styleUrl:'./team-owner-page.scss'})
 export class TeamOwnerPage implements OnInit {
   email='';password='';teamId='';profile:TeamProfileData|null=null;loading=true;busy=false;error='';message='';bannerFile:File|null=null;logoFile:File|null=null;coachPhotoFile:File|null=null;galleryFile:File|null=null;playerPhotoFile:File|null=null;staffPhotoFile:File|null=null;achievementImageFile:File|null=null;
   teamName='';tagline='';description='';coachName='';city='';foundedYear:number|null=null;instagramUrl='';facebookUrl='';whatsapp='';accentColor='#09a9ef';profileStyle:'stadium'|'heritage'|'street'='stadium';galleryCaption='';staffName='';staffRole='Ayudante de campo';achievementTitle='';achievementDescription='';achievementYear:number|null=null;playerName='';playerNumber:number|null=null;

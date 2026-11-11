@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TournamentDataService, TournamentScorer, TournamentSummary } from './tournament-data.service';
+import { VectorIconComponent } from './vector-icon';
 
-@Component({selector:'app-scorers-page',standalone:true,imports:[CommonModule,FormsModule,RouterLink],templateUrl:'./scorers-page.html',styleUrl:'./scorers-page.scss'})
+@Component({selector:'app-scorers-page',standalone:true,imports:[CommonModule,FormsModule,RouterLink,VectorIconComponent],templateUrl:'./scorers-page.html',styleUrl:'./scorers-page.scss'})
 export class ScorersPage implements OnInit {
   years:number[]=[];tournaments:TournamentSummary[]=[];year=0;tournamentId='';scorers:TournamentScorer[]=[];loading=true;error='';
   constructor(private data:TournamentDataService,private cdr:ChangeDetectorRef){}
