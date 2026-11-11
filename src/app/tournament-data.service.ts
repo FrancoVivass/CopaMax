@@ -182,6 +182,10 @@ export class TournamentDataService {
     const {data,error}=await this.client().from('players').insert({team_id:player.teamId,name:player.name,shirt_number:player.number,photo_url:player.photoUrl||null}).select('*').single();
     if(error)throw error;return {id:data.id,teamId:data.team_id,name:data.name,number:data.shirt_number===null?null:Number(data.shirt_number),photoUrl:data.photo_url||''};
   }
+  async updatePlayer(id:string,player:{teamId:string;name:string;number:number|null;photoUrl?:string}):Promise<TournamentPlayer>{
+    const {data,error}=await this.client().from('players').update({team_id:player.teamId,name:player.name.trim(),shirt_number:player.number,photo_url:player.photoUrl||null}).eq('id',id).select('*').single();
+    if(error)throw error;return {id:data.id,teamId:data.team_id,name:data.name,number:data.shirt_number===null?null:Number(data.shirt_number),photoUrl:data.photo_url||''};
+  }
   async deletePlayer(id:string):Promise<void>{const {error}=await this.client().from('players').delete().eq('id',id);if(error)throw error;}
   async updatePlayerPhoto(id:string,photoUrl:string):Promise<void>{const {error}=await this.client().from('players').update({photo_url:photoUrl||null}).eq('id',id);if(error)throw error;}
 
